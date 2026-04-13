@@ -2,104 +2,95 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
+use App\Models\Usuario;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\Rules\Password;
+use Illuminate\Support\Facades\Log;
 
 class AuthController extends Controller
 {
-    // ── Mostrar formulario de login ──────────────────
     public function showLogin()
     {
         if (Auth::check()) {
-            return $this->redirectByRole(Auth::user()->role);
+            return $this->redirectByRole(Auth::user()->rol);
         }
-
         return view('auth.login');
     }
 
-    // ── Procesar inicio de sesión ────────────────────
     public function login(Request $request)
     {
         $credentials = $request->validate([
-            'email'    => ['required', 'email'],
-            'password' => ['required'],
+            'correo'   => ['required', 'email'],
+            'clave'    => ['required'],
         ], [
-            'email.required'    => 'El correo electrónico es obligatorio.',
-            'email.email'       => 'Ingresa un correo electrónico válido.',
-            'password.required' => 'La contraseña es obligatoria.',
+            'correo.required' => 'El correo es obligatorio.',
+            'correo.email'    => 'Ingresa un correo válido.',
+            'clave.required'  => 'La contraseña es obligatoria.',
         ]);
 
-        $remember = $request->boolean('remember');
-
-        if (Auth::attempt($credentials, $remember)) {
+        if (Auth::attempt(['correo' => $credentials['correo'], 'password' => $credentials['clave']])) {
             $request->session()->regenerate();
 
-            return $this->redirectByRole(Auth::user()->role)
-                        ->with('success', '¡Bienvenido, ' . Auth::user()->name . '!');
+            Log::channel('autenticacion')->info('Login exitoso', [
+                'usuario_id' => Auth::user()->id,
+                'correo'     => Auth::user()->correo,
+                'ip'         => $request->ip(),
+            ]);
+
+            return $this->redirectByRole(Auth::user()->rol)
+                        ->with('success', '¡Bienvenido, ' . Auth::user()->nombre . '!');
         }
 
+        Log::channel('autenticacion')->warning('Login fallido', [
+            'correo' => $request->correo,
+            'ip'     => $request->ip(),
+        ]);
+
         return back()
-            ->withInput($request->only('email'))
-            ->withErrors(['email' => 'Las credenciales no coinciden con nuestros registros.']);
+            ->withInput($request->only('correo'))
+            ->withErrors(['correo' => 'Las credenciales no coinciden.']);
     }
 
-    // ── Mostrar formulario de registro ───────────────
     public function showRegister()
     {
         if (Auth::check()) {
-            return $this->redirectByRole(Auth::user()->role);
+            return $this->redirectByRole(Auth::user()->rol);
         }
-
         return view('auth.register');
     }
 
-    // ── Procesar registro ────────────────────────────
     public function register(Request $request)
     {
         $validated = $request->validate([
-            'name'     => ['required', 'string', 'min:3', 'max:100',
-                           'regex:/^[\pL\s\-]+$/u'],
-            'email'    => ['required', 'email', 'max:255', 'unique:users,email'],
-            'phone'    => ['nullable', 'string', 'regex:/^[0-9\+\-\s]{7,15}$/'],
-            'password' => ['required', 'confirmed',
-                           Password::min(8)
-                               ->letters()
-                               ->numbers()
-                               ->mixedCase()],
-        ], [
-            'name.required'           => 'El nombre es obligatorio.',
-            'name.min'                => 'El nombre debe tener al menos 3 caracteres.',
-            'name.max'                => 'El nombre no puede superar 100 caracteres.',
-            'name.regex'              => 'El nombre solo puede contener letras y espacios.',
-            'email.required'          => 'El correo electrónico es obligatorio.',
-            'email.email'             => 'Ingresa un correo electrónico válido.',
-            'email.unique'            => 'Este correo ya está registrado.',
-            'phone.regex'             => 'Ingresa un número de teléfono válido.',
-            'password.required'       => 'La contraseña es obligatoria.',
-            'password.confirmed'      => 'Las contraseñas no coinciden.',
-            'password.min'            => 'La contraseña debe tener al menos 8 caracteres.',
+            'nombre'   => ['required', 'string', 'min:3', 'max:100'],
+            'apellidos'=> ['required', 'string', 'min:3', 'max:100'],
+            'correo'   => ['required', 'email', 'unique:usuarios,correo'],
+            'clave'    => ['required', 'confirmed', 'min:6'],
         ]);
 
-        $user = User::create([
-            'name'     => $validated['name'],
-            'email'    => $validated['email'],
-            'phone'    => $validated['phone'] ?? null,
-            'password' => Hash::make($validated['password']),
-            'role'     => $request->role ?? 'cliente', // Todo registro público es cliente
+        $usuario = Usuario::create([
+            'nombre'   => $validated['nombre'],
+            'apellidos'=> $validated['apellidos'],
+            'correo'   => $validated['correo'],
+            'clave'    => Hash::make($validated['clave']),
+            'rol'      => 'cliente',
         ]);
 
-        Auth::login($user);
+        Auth::login($usuario);
 
         return redirect()->route('dashboard.cliente')
-                         ->with('success', '¡Cuenta creada exitosamente! Bienvenido.');
+                         ->with('success', '¡Cuenta creada exitosamente!');
     }
 
-    // ── Cerrar sesión ────────────────────────────────
     public function logout(Request $request)
     {
+        Log::channel('autenticacion')->info('Logout', [
+            'usuario_id' => Auth::user()->id,
+            'correo'     => Auth::user()->correo,
+            'ip'         => $request->ip(),
+        ]);
+
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
@@ -108,13 +99,12 @@ class AuthController extends Controller
                          ->with('success', 'Has cerrado sesión correctamente.');
     }
 
-    // ── Helper: redirigir según rol ──────────────────
-    private function redirectByRole(string $role)
+    private function redirectByRole(string $rol)
     {
-        return match ($role) {
-            'gerente'  => redirect()->route('dashboard.gerente'),
-            'empleado' => redirect()->route('dashboard.empleado'),
-            default    => redirect()->route('dashboard.cliente'),
+        return match ($rol) {
+            'administrador' => redirect()->route('dashboard.administrador'),
+            'gerente'       => redirect()->route('dashboard.gerente'),
+            default         => redirect()->route('dashboard.cliente'),
         };
     }
 }

@@ -3,11 +3,14 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\UserController;
+use App\Http\Controllers\ProductoController;
+use App\Http\Controllers\CategoriaController;
+use App\Http\Controllers\VentaController;
+use App\Http\Controllers\UsuarioController;
 
 /*
 |--------------------------------------------------------------------------
-| RUTAS PÚBLICAS — accesibles para todos (anónimos y autenticados)
+| RUTAS PÚBLICAS
 |--------------------------------------------------------------------------
 */
 Route::get('/', fn () => view('pages.home'))->name('home');
@@ -22,11 +25,10 @@ Route::get('/ubicacion', fn () => view('pages.location'))->name('location');
 |--------------------------------------------------------------------------
 */
 Route::middleware('guest')->group(function () {
-    Route::get('/login',    [AuthController::class, 'showLogin'])->name('login');
-    Route::post('/login',   [AuthController::class, 'login']);
-
-    Route::get('/registro', [AuthController::class, 'showRegister'])->name('register');
-    Route::post('/registro',[AuthController::class, 'register']);
+    Route::get('/login',     [AuthController::class, 'showLogin'])->name('login');
+    Route::post('/login',    [AuthController::class, 'login']);
+    Route::get('/registro',  [AuthController::class, 'showRegister'])->name('register');
+    Route::post('/registro', [AuthController::class, 'register']);
 });
 
 Route::post('/logout', [AuthController::class, 'logout'])
@@ -35,28 +37,27 @@ Route::post('/logout', [AuthController::class, 'logout'])
 
 /*
 |--------------------------------------------------------------------------
-| DASHBOARDS (protegidos por autenticación y rol)
+| DASHBOARDS
 |--------------------------------------------------------------------------
 */
-Route::middleware(['auth', 'role:cliente'])->group(function () {
+Route::middleware('auth')->group(function () {
+
     Route::get('/dashboard/cliente', [DashboardController::class, 'cliente'])
          ->name('dashboard.cliente');
-});
 
-Route::middleware(['auth', 'role:empleado'])->group(function () {
-    Route::get('/dashboard/empleado', [DashboardController::class, 'empleado'])
-         ->name('dashboard.empleado');
-});
-
-Route::middleware(['auth', 'role:gerente'])->group(function () {
     Route::get('/dashboard/gerente', [DashboardController::class, 'gerente'])
          ->name('dashboard.gerente');
 
-         // Dentro de tu grupo de Gerente
-Route::middleware(['auth', 'role:gerente'])->group(function () {
-    Route::get('/dashboard/gerente', [DashboardController::class, 'gerente'])->name('dashboard.gerente');
-    
-    // Esta línea crea automáticamente las rutas index, show, update y destroy
-    Route::apiResource('usuarios', UserController::class);
-});
+    Route::get('/dashboard/administrador', [DashboardController::class, 'administrador'])
+         ->name('dashboard.administrador');
+
+    /*
+    |--------------------------------------------------------------------------
+    | CRUD RECURSOS
+    |--------------------------------------------------------------------------
+    */
+    Route::resource('productos',  ProductoController::class);
+    Route::resource('categorias', CategoriaController::class);
+    Route::resource('ventas',     VentaController::class);
+    Route::resource('usuarios',   UsuarioController::class);
 });
