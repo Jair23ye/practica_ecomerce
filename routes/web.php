@@ -21,7 +21,7 @@ Route::get('/ubicacion', fn () => view('pages.location'))->name('location');
 
 /*
 |--------------------------------------------------------------------------
-| AUTENTICACIÓN
+| AUTENTICACIÓN (fase 1 + 2FA)
 |--------------------------------------------------------------------------
 */
 Route::middleware('guest')->group(function () {
@@ -29,6 +29,10 @@ Route::middleware('guest')->group(function () {
     Route::post('/login',    [AuthController::class, 'login']);
     Route::get('/registro',  [AuthController::class, 'showRegister'])->name('register');
     Route::post('/registro', [AuthController::class, 'register']);
+
+    // Fase 2: verificación de código OTP
+    Route::get('/verificar-2fa',  [AuthController::class, 'showVerificar2FA'])->name('auth.verificar-2fa');
+    Route::post('/verificar-2fa', [AuthController::class, 'verificar2FA'])->name('auth.verificar-2fa.post');
 });
 
 Route::post('/logout', [AuthController::class, 'logout'])
@@ -37,19 +41,14 @@ Route::post('/logout', [AuthController::class, 'logout'])
 
 /*
 |--------------------------------------------------------------------------
-| DASHBOARDS
+| DASHBOARDS Y RECURSOS PROTEGIDOS
 |--------------------------------------------------------------------------
 */
 Route::middleware('auth')->group(function () {
 
-    Route::get('/dashboard/cliente', [DashboardController::class, 'cliente'])
-         ->name('dashboard.cliente');
-
-    Route::get('/dashboard/gerente', [DashboardController::class, 'gerente'])
-         ->name('dashboard.gerente');
-
-    Route::get('/dashboard/administrador', [DashboardController::class, 'administrador'])
-         ->name('dashboard.administrador');
+    Route::get('/dashboard/cliente',       [DashboardController::class, 'cliente'])->name('dashboard.cliente');
+    Route::get('/dashboard/gerente',       [DashboardController::class, 'gerente'])->name('dashboard.gerente');
+    Route::get('/dashboard/administrador', [DashboardController::class, 'administrador'])->name('dashboard.administrador');
 
     /*
     |--------------------------------------------------------------------------
@@ -60,4 +59,10 @@ Route::middleware('auth')->group(function () {
     Route::resource('categorias', CategoriaController::class);
     Route::resource('ventas',     VentaController::class);
     Route::resource('usuarios',   UsuarioController::class);
+
+    // Servir ticket privado (disco local, acceso autorizado por Policy)
+    Route::get('/ventas/{venta}/ticket',  [VentaController::class, 'verTicket'])->name('ventas.ticket');
+
+    // Validar venta (solo gerente)
+    Route::patch('/ventas/{venta}/validar', [VentaController::class, 'validar'])->name('ventas.validar');
 });

@@ -20,6 +20,8 @@ class StoreProductoRequest extends FormRequest
             'existencia'  => ['required', 'integer', 'min:0'],
             'categorias'  => ['required', 'array'],
             'categorias.*'=> ['exists:categorias,id'],
+            'fotos'       => ['nullable', 'array', 'max:5'],
+            'fotos.*'     => ['image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
         ];
     }
 }

@@ -31,4 +31,16 @@ class UsuarioPolicy
     {
         return $auth->rol === 'administrador';
     }
+
+    // Solo administrador accede a estadísticas del dashboard
+    public function verEstadisticas(Usuario $auth): bool
+    {
+        return $auth->rol === 'administrador';
+    }
+
+    // Solo gerente accede al dashboard de gerente
+    public function gerenteDashboard(Usuario $auth): bool
+    {
+        return $auth->rol === 'gerente';
+    }
 }

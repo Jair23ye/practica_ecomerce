@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Venta extends Model
 {
+    use HasFactory;
+
     protected $table = 'ventas';
 
     protected $fillable = [
@@ -14,6 +17,12 @@ class Venta extends Model
         'cliente_id',
         'fecha',
         'total',
+        'ticket',
+        'validada',
+    ];
+
+    protected $casts = [
+        'validada' => 'boolean',
     ];
 
     public function producto()

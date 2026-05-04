@@ -8,6 +8,7 @@ use App\Http\Requests\StoreProductoRequest;
 use App\Http\Requests\UpdateProductoRequest;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 class ProductoController extends Controller
 {
@@ -29,9 +30,17 @@ class ProductoController extends Controller
     {
         $this->authorize('create', Producto::class);
 
+        $fotos = [];
+        if ($request->hasFile('fotos')) {
+            foreach ($request->file('fotos') as $foto) {
+                $fotos[] = $foto->store('productos', 'public');
+            }
+        }
+
         $producto = Producto::create([
-            ...$request->validated(),
+            ...$request->safe()->except('categorias', 'fotos'),
             'usuario_id' => Auth::id(),
+            'fotos'      => $fotos ?: null,
         ]);
 
         $producto->categorias()->attach($request->categorias);
@@ -64,7 +73,24 @@ class ProductoController extends Controller
     {
         $this->authorize('update', $producto);
 
-        $producto->update($request->validated());
+        $fotos = $producto->fotos ?? [];
+
+        if ($request->hasFile('fotos')) {
+            // Eliminar fotos anteriores del disco público
+            foreach ($fotos as $fotoAnterior) {
+                Storage::disk('public')->delete($fotoAnterior);
+            }
+            $fotos = [];
+            foreach ($request->file('fotos') as $foto) {
+                $fotos[] = $foto->store('productos', 'public');
+            }
+        }
+
+        $producto->update([
+            ...$request->safe()->except('categorias', 'fotos'),
+            'fotos' => $fotos ?: null,
+        ]);
+
         $producto->categorias()->sync($request->categorias);
 
         Log::channel('productos')->info('Producto editado', [
@@ -80,6 +106,11 @@ class ProductoController extends Controller
     public function destroy(Producto $producto)
     {
         $this->authorize('delete', $producto);
+
+        // Eliminar fotos del disco público
+        foreach ($producto->fotos ?? [] as $foto) {
+            Storage::disk('public')->delete($foto);
+        }
 
         Log::channel('productos')->warning('Producto eliminado', [
             'producto_id' => $producto->id,

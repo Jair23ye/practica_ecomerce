@@ -44,13 +44,14 @@ public function ventasComoCliente()
     return $this->hasMany(Venta::class, 'cliente_id');
 }
 
-public function categorias()
+// hasManyThrough: vendedor → ventas a través de sus productos
+public function ventasDeProductos()
 {
     return $this->hasManyThrough(
-        Categoria::class,
+        Venta::class,
         Producto::class,
-        'usuario_id',
-        'id',
+        'usuario_id',   // FK en productos → usuarios
+        'producto_id',  // FK en ventas → productos
         'id',
         'id'
     );

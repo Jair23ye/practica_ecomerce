@@ -14,8 +14,10 @@
         </div>
     @endif
 
-    <form method="POST" action="{{ route('ventas.store') }}" class="bg-white rounded-xl shadow p-8 space-y-5">
+    <form method="POST" action="{{ route('ventas.store') }}" enctype="multipart/form-data"
+          class="bg-white rounded-xl shadow p-8 space-y-5">
         @csrf
+
         <div>
             <label class="block text-sm font-semibold text-gray-700 mb-1">Producto</label>
             <select name="producto_id"
@@ -23,11 +25,12 @@
                 <option value="">Selecciona un producto</option>
                 @foreach($productos as $producto)
                     <option value="{{ $producto->id }}" {{ old('producto_id') == $producto->id ? 'selected' : '' }}>
-                        {{ $producto->nombre }} - ${{ number_format($producto->precio, 2) }}
+                        {{ $producto->nombre }} — ${{ number_format($producto->precio, 2) }}
                     </option>
                 @endforeach
             </select>
         </div>
+
         <div>
             <label class="block text-sm font-semibold text-gray-700 mb-1">Cliente</label>
             <select name="cliente_id"
@@ -40,16 +43,35 @@
                 @endforeach
             </select>
         </div>
-        <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-1">Fecha</label>
-            <input type="date" name="fecha" value="{{ old('fecha', date('Y-m-d')) }}"
-                class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500">
+
+        <div class="grid grid-cols-2 gap-4">
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-1">Fecha</label>
+                <input type="date" name="fecha" value="{{ old('fecha', date('Y-m-d')) }}"
+                    class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-1">Total ($)</label>
+                <input type="number" name="total" value="{{ old('total') }}" step="0.01" min="0"
+                    class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
         </div>
+
+        {{-- Ticket — disco privado, NO accesible públicamente --}}
         <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-1">Total</label>
-            <input type="number" name="total" value="{{ old('total') }}" step="0.01" min="0"
-                class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <label class="block text-sm font-semibold text-gray-700 mb-1">
+                Ticket / Comprobante
+                <span class="text-gray-400 font-normal">(imagen, máx. 4 MB — almacenado de forma privada)</span>
+            </label>
+            <input type="file" name="ticket" accept="image/*"
+                class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm
+                       file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0
+                       file:bg-green-50 file:text-green-700 hover:file:bg-green-100">
+            @error('ticket')
+                <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+            @enderror
         </div>
+
         <div class="flex gap-3">
             <button type="submit"
                 class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition">

@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Producto extends Model
 {
+    use HasFactory;
+
     protected $table = 'productos';
 
     protected $fillable = [
@@ -14,6 +17,11 @@ class Producto extends Model
         'precio',
         'existencia',
         'usuario_id',
+        'fotos',
+    ];
+
+    protected $casts = [
+        'fotos' => 'array',
     ];
 
     public function usuario()
