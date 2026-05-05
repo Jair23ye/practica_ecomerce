@@ -30,6 +30,15 @@ class DatabaseSeeder extends Seeder
             'rol'       => 'administrador',
         ]);
 
+        // Cuenta gerente fija para pruebas de validación de ventas
+        Usuario::create([
+            'nombre'    => 'Mauricio',
+            'apellidos' => 'Gerente',
+            'correo'    => 'gerente@tienda.com',
+            'clave'     => Hash::make('123'),
+            'rol'       => 'gerente',
+        ]);
+
         // ── 30 gerentes (vendedores) + 70 clientes (compradores) ───────
         $gerentes = Usuario::factory(30)->gerente()->create();
         $clientes = Usuario::factory(70)->cliente()->create();
