@@ -1,0 +1,62 @@
+name: Laravel CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  laravel-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      # ── 1. Clonar repositorio ───────────────────────────────────────────
+      - name: Clonar repositorio
+        uses: actions/checkout@v4
+
+      # ── 2. Instalar PHP ─────────────────────────────────────────────────
+      - name: Instalar PHP 8.2
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring, xml, ctype, fileinfo, openssl, pdo, bcmath, json, tokenizer, sqlite3, gd, zip
+          coverage: none
+
+      # ── 3. Instalar dependencias Composer ───────────────────────────────
+      - name: Instalar dependencias Composer
+        run: composer install --prefer-dist --no-interaction --no-progress --optimize-autoloader
+
+      # ── 4. Configurar entorno ───────────────────────────────────────────
+      - name: Copiar archivo de entorno
+        run: cp .env.example .env
+
+      - name: Generar clave de aplicación
+        run: php artisan key:generate
+
+      - name: Configurar permisos
+        run: |
+          chmod -R 775 storage
+          chmod -R 775 bootstrap/cache
+
+      # ── 5. Configurar SQLite para pruebas ───────────────────────────────
+      - name: Crear base de datos SQLite
+        run: touch database/database.sqlite
+
+      # ── 6. Ejecutar migraciones ─────────────────────────────────────────
+      - name: Ejecutar migraciones
+        env:
+          DB_CONNECTION: sqlite
+          DB_DATABASE: ${{ github.workspace }}/database/database.sqlite
+        run: php artisan migrate --force
+
+      # ── 7. Ejecutar seeders ─────────────────────────────────────────────
+      - name: Ejecutar seeders
+        env:
+          DB_CONNECTION: sqlite
+          DB_DATABASE: ${{ github.workspace }}/database/database.sqlite
+        run: php artisan db:seed --force
+
+      # ── 8. Ejecutar pruebas automáticas ────────────────────────────────
+      - name: Ejecutar pruebas automáticas
+        run: php artisan test --stop-on-failure
