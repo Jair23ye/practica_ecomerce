@@ -55,7 +55,7 @@ php artisan storage:link
 php artisan serve
 ```
 
-La aplicación estará disponible en: `http://localhost:8000`
+La aplicación estará disponible en: `https://practica-ecomerce-6w8c.onrender.com`
 
 **Credenciales de prueba:**
 | Rol           | Correo                          | Clave |
@@ -93,7 +93,7 @@ El archivo `.github/workflows/laravel.yml` ejecuta automáticamente al hacer pus
 
 La aplicación está desplegada en **Render.com** usando Docker.
 
-**URL pública:** `https://ecommerce-practica.onrender.com`
+**URL pública:** `https://practica-ecomerce-6w8c.onrender.com`
 
 ### Despliegue manual en Render
 
