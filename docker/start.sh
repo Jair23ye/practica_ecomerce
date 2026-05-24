@@ -12,10 +12,15 @@ php artisan storage:link --force 2>/dev/null || true
 # Ejecutar migraciones
 php artisan migrate --force
 
-# Limpiar y cachear configuración para producción
+# Cachear configuración para producción
 php artisan config:cache
 php artisan route:cache
 php artisan view:cache
+
+# Reparar permisos del archivo SQLite para que Apache (www-data) pueda escribir
+chown -R www-data:www-data /var/www/html/database
+chmod 775 /var/www/html/database
+chmod 664 /var/www/html/database/database.sqlite
 
 # Iniciar Apache
 apache2-foreground
