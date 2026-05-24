@@ -19,7 +19,7 @@ jobs:
       - name: Instalar PHP 8.2
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.2'
+          php-version: '8.3'
           extensions: mbstring, xml, ctype, fileinfo, openssl, pdo, bcmath, json, tokenizer, sqlite3, gd, zip
           coverage: none
 

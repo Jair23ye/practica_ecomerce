@@ -4,7 +4,7 @@ Sistema de comercio electrónico desarrollado con Laravel como parte del Mini Pr
 
 ## Tecnologías usadas
 
-- **PHP 8.2** — Lenguaje principal
+- **PHP 8.3** — Lenguaje principal
 - **Laravel 11** — Framework web
 - **SQLite** — Base de datos (desarrollo/pruebas) / MySQL (producción opcional)
 - **GitHub Actions** — Integración continua (CI)
