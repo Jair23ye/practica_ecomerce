@@ -12,6 +12,22 @@ php artisan storage:link --force 2>/dev/null || true
 # Ejecutar migraciones
 php artisan migrate --force
 
+# Ejecutar seeders solo si no hay usuarios (primera instalación)
+USER_COUNT=$(php -r "
+try {
+    \$db = new PDO('sqlite:' . getenv('DB_DATABASE'));
+    echo \$db->query('SELECT COUNT(*) FROM usuarios')->fetchColumn();
+} catch (Exception \$e) {
+    echo 0;
+}
+" 2>/dev/null || echo 0)
+
+if [ "$USER_COUNT" = "0" ]; then
+    echo "Base de datos vacía — ejecutando seeders..."
+    php artisan db:seed --force
+    echo "Seeders completados."
+fi
+
 # Cachear configuración para producción
 php artisan config:cache
 php artisan route:cache
